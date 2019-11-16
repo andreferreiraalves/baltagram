@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { ToastController, NavController } from '@ionic/angular';
+import { ToastController, NavController, ActionSheetController } from '@ionic/angular';
+import { Observable } from 'rxjs';
+import { User } from 'src/app/models/user.model';
+import { AngularFirestore } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-home',
@@ -7,11 +10,17 @@ import { ToastController, NavController } from '@ionic/angular';
   styleUrls: ['home.page.scss'],
 })
 export class HomePage implements OnInit {
+  public user: User = new User('', '', 'https://placehold.it/80');
+  posts: Observable<any[]>;
 
   constructor(
+    db: AngularFirestore,
     private toastCtrl: ToastController,
     private navCtrl: NavController,
-  ) { }
+    private actionSheetCtrl: ActionSheetController,
+  ) {
+    this.posts = db.collection('posts').valueChanges();
+  }
 
   ngOnInit() {
     const img = localStorage.getItem('baltagram.post');
@@ -34,5 +43,23 @@ export class HomePage implements OnInit {
 
     toast.present();
   }
-
+  async showOptions() {
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: 'Opções',
+      buttons: [{
+        text: 'Logout',
+        role: 'destructive',
+        icon: 'power',
+        handler: () => {
+          localStorage.removeItem('baltagram.user');
+          this.navCtrl.navigateRoot("/login");
+        }
+      }, {
+        text: 'Cancelar',
+        icon: 'close',
+        role: 'cancel',
+      }]
+    });
+    await actionSheet.present();
+  }
 }
